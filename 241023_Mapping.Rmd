@@ -1,0 +1,14 @@
+```{r Setup}
+library(tidyverse)
+library(maps)
+library(usmap)
+```
+
+```{r}
+wa_county <- map_data("county") %>% filter(region == "washington") #get county boundaries
+
+wa_dat <- countypop %>% filter(abbr == "WA") %>%
+  mutate(subregion = tolower(str_remove(county, " County"))) %>%
+  group_by(subregion) %>% summarize()
+```
+
