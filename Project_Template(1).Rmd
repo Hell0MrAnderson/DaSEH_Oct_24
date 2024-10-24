@@ -17,6 +17,12 @@ library(tidyverse)
 WQ_sites <- read_csv("~/School/DaSEH/DaSEH_Codeathon/WQ_Sites.csv")
 head(WQ_sites) #preview data types
 
+colnames(WQ_Samples_sub)
+
+WQ_Samples_sub %>% select(CharacteristicName) %>% unique()
+WQ_Samples_sub %>% select(`ResultAnalyticalMethod/MethodIdentifier`) %>% unique()
+
+WQ_Samples_sub %>% select(OrganizationFormalName, )
 ```
 
 **describe** what your data looks like and **where** you got it. Identify what the variables and samples are, or point to a data dictionary. Describe how the data was originally created. 
@@ -38,6 +44,10 @@ WA_counties <- WA_counties %>%
 head(WA_counties)
 
 WQ_sites %>% mutate(County = )
+
+WQ_Samples_sub <- WQ_Samples %>% filter(ActivityMediaName == "Water" &                                !str_detect(ActivityTypeCode, "Control") & str_detect(OrganizationFormalName, "Trib") &                    (str_detect(`ResultAnalyticalMethod/MethodIdentifier`,"6010")| str_detect(`ResultAnalyticalMethod/MethodIdentifier`,"6020")| str_detect(`ResultAnalyticalMethod/MethodIdentifier`,"7010")| str_detect(`ResultAnalyticalMethod/MethodIdentifier`,"200.7")| str_detect(`ResultAnalyticalMethod/MethodIdentifier`,"200.8"))) #filter for tribal water metal data w/o QC samples
+
+
 ```
 
 
