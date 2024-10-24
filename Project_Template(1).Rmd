@@ -14,13 +14,15 @@ You might start by setting up an R Project, importing your data, previewing the 
 ```{r}
 library(tidyverse)
 library(naniar)
+library(ggplot2)
+library(esquisse)
 
 WQ_sites <- read_csv("~/School/DaSEH/DaSEH_Codeathon/WQ_Sites.csv")
 head(WQ_sites) #preview data types
 
 colnames(WQ_Samples_sub)
 
-WQ_Samples_sub %>% select(ResultStatusIdentifier) %>% unique()
+WQ_Samples %>% select(CharacteristicName) %>% unique()
 WQ_Samples_sub %>% select(`ResultAnalyticalMethod/MethodIdentifier`) %>% unique()
 
 
@@ -69,6 +71,11 @@ WQ_Samples_sub <- WQ_Samples_sub %>% select(OrganizationFormalName, ActivityStar
 #select relevant columns
 
 WQ_Samples_sub <- WQ_Samples_sub %>%
+  filter(
+    CharacteristicName %in% c("Arsenic", "Cadmium", "Chromium", "Copper", "Lead", "Mercury", "Zinc" )
+  ) #filter for contaminant metals
+
+WQ_Samples_sub <- WQ_Samples_sub %>%
   rename(Latitude = `ActivityLocation/LatitudeMeasure`, 
          Logitude = `ActivityLocation/LongitudeMeasure`,
          ResultMeasureUnit = `ResultMeasure/MeasureUnitCode`,
@@ -79,10 +86,37 @@ WQ_Samples_sub <- WQ_Samples_sub %>%
 #remove missing results
 
 WQ_Samples_sub <- WQ_Samples_sub %>%
-  mutate(ResultMeasureValue = 
-           case_when(str_detect(ResultMeasureValue, "<") ~ "0"),
+  mutate(
+    ResultMeasureValue = case_when(
+             str_detect(ResultMeasureValue, '<') ~ '0',
          TRUE ~ ResultMeasureValue
          )
+  ) #convert n.d. to zeros
+
+WQ_Samples_sub <- WQ_Samples_sub %>%
+  mutate(
+    ResultMeasureValue = str_remove(ResultMeasureValue, ",")
+  ) %>%
+  mutate(
+    ResultMeasureValue_ppb = as.numeric(ResultMeasureValue)
+    ) %>%
+  mutate(
+    ResultMeasureValue_ppb = case_when(
+      ResultMeasureUnit == "mg/L" ~ ResultMeasureValue_ppb*1000,
+    TRUE ~ ResultMeasureValue_ppb
+    )
+  ) #create numeric column with standardized units
+
+WQ_Samples_sub <- WQ_Samples_sub %>%
+  mutate(
+    ActivityStartYear = 
+      str_sub(ActivityStartDate, start = 1, end = 4) ) %>%
+  filter(ActivityStartYear >= 2000)%>%  
+  group_by(
+    across(c(ActivityStartYear, CharacteristicName)) ) %>%
+  mutate(
+    AverageYearlyLvl = mean(ResultMeasureValue_ppb)
+  ) #create year column and avg column by year and analyte
 ```
 
 
@@ -91,7 +125,12 @@ WQ_Samples_sub <- WQ_Samples_sub %>%
 Create some visualizations of your data using the esquisse app or the ggplot2 package.
 
 ```{r}
+WQ_Samples_sub %>% filter(CharacteristicName == "Arsenic") %>% ggplot(
+  aes(x = ActivityStartYear, y = AverageYearlyLvl, color = CharacteristicName)) +
+  geom_line() + facet_wrap(~ CharacteristicName, ncol = 3) +
+  theme(legend.position = "none")
 
+esquisser(WA_Samples_sub)
 ```
 
 
